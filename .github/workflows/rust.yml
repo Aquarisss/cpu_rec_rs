@@ -1,22 +1,43 @@
-name: Rust
+name: Release Build
 
-on:
-  push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
-
-env:
-  CARGO_TERM_COLOR: always
-
+on: workflow_dispatch
 jobs:
-  build:
-
-    runs-on: ubuntu-latest
-
+  release:
+    name: Release - ${{ matrix.platform.os-name }}
+    strategy:
+      matrix:
+        platform:
+          - os-name: Windows-x86_64
+            runs-on: windows-latest
+            target: x86_64-pc-windows-msvc
+    
+    runs-on: ${{ matrix.platform.runs-on }}
     steps:
-    - uses: actions/checkout@v3
-    - name: Build
-      run: cargo build --verbose
-    - name: Run tests
-      run: cargo test --verbose
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build binary
+        uses: houseabsolute/actions-rust-cross@v1
+        with:
+          command: build
+          target: ${{ matrix.platform.target }}
+          args: "--locked --release"
+          strip: true
+
+      - name: Publish artifacts and release
+        uses: houseabsolute/actions-rust-release@v0
+        with:
+          executable-name: binwalk
+          target: ${{ matrix.platform.target }}
+          release-tag-prefix: v      
+          changes-file: ""  
+          action-gh-release-parameters: |
+            {
+              "draft": false,
+              "prerelease": false,
+              "overwrite": true,
+              "generate_release_notes": false,
+              "make_latest": true,
+              "token": "${{ secrets.GITHUB_TOKEN }}"
+            }
+        
