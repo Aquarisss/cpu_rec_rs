@@ -27,7 +27,7 @@ jobs:
       - name: Publish artifacts and release
         uses: houseabsolute/actions-rust-release@v0
         with:
-          executable-name: binwalk
+          executable-name: cpu_rec_rs
           target: ${{ matrix.platform.target }}
           release-tag-prefix: v      
           changes-file: ""  
